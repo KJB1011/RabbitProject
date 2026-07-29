@@ -113,6 +113,7 @@ public class IngameManager : MonoBehaviour
         {
             _player.transform.position = _playerOffscreen;
             _player.SetControllable(false);
+            _player.SetBoundary(false); // ← 경계 끄기
         }
 
         // UI 페이드 인
@@ -126,14 +127,18 @@ public class IngameManager : MonoBehaviour
         else
             yield return new WaitForSeconds(_uiFadeDuration);
 
-        // 플레이어가 왼쪽에서 들어옴
+        // 플레이어 등장
         if (_player != null)
             yield return StartCoroutine(
                 PlayerEnterFromLeft(_playerOffscreen, _playerStartPos, _playerEnterTime));
-        if (_player != null)
-            _player.SetControllable(true);
 
-        // 스테이지 활성화
+        // 등장 완료 후 경계 다시 켜기
+        if (_player != null)
+        {
+            _player.SetBoundary(true);  // ← 경계 켜기
+            _player.SetControllable(true);
+        }
+
         ActivateNode(0);
     }
 

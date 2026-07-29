@@ -42,6 +42,10 @@ public class PlayerController : MonoBehaviour
     [Header("노드 이동")]
     [SerializeField] float _nodeMoveDuration = 1f; // 이동 시간
 
+    [Header("맵 경계")]
+    [SerializeField] Vector2 _mapMin = new Vector2(-9f, -5f); // 왼쪽 하단
+    [SerializeField] Vector2 _mapMax = new Vector2(9f, 5f); // 오른쪽 상단
+
     TrailRenderer _trailRenderer;
     SpriteRenderer _spriteRenderer;
 
@@ -50,6 +54,7 @@ public class PlayerController : MonoBehaviour
     bool _isAttack = false;
     bool _isGameOver = false;
     bool _isControllable = true;
+    bool _boundaryEnabled = true;
 
     int _invincibleCount = 0;
     public bool _isInvincible => _invincibleCount > 0;
@@ -99,6 +104,11 @@ public class PlayerController : MonoBehaviour
         _isControllable = value;
     }
 
+    // 캐릭터 맵 제한 제어 함수
+    public void SetBoundary(bool enabled)
+    {
+        _boundaryEnabled = enabled;
+    }
     public void GameOver()
     {
         _isGameOver = true;
@@ -145,6 +155,15 @@ public class PlayerController : MonoBehaviour
 
         if (!_isDashing && _isControllable)
             transform.Translate(_dir * _speed * Time.deltaTime);
+
+        if (_boundaryEnabled)
+        {
+            transform.position = new Vector3(
+                Mathf.Clamp(transform.position.x, _mapMin.x, _mapMax.x),
+                Mathf.Clamp(transform.position.y, _mapMin.y, _mapMax.y),
+                transform.position.z
+            );
+        }
 
         if (mousePos.x < transform.position.x)
         {
@@ -502,8 +521,19 @@ public void DamageTaken()
             elapsed += Time.deltaTime;
             float curveT = _dashCurve.Evaluate(elapsed / _dashDuration);
             transform.position = Vector2.Lerp(startPos, targetPos, curveT);
+
+            if (_boundaryEnabled)
+            {
+                transform.position = new Vector3(
+                    Mathf.Clamp(transform.position.x, _mapMin.x, _mapMax.x),
+                    Mathf.Clamp(transform.position.y, _mapMin.y, _mapMax.y),
+                    transform.position.z
+                );
+            }
+
             if (Vector2.Distance(startPos, transform.position) >= finalDashDistance * 0.95f)
                 break;
+
             yield return null;
         }
 
