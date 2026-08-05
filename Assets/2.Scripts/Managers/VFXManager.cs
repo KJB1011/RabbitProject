@@ -151,6 +151,14 @@ public class VFXManager : MonoBehaviour
         return pool;
     }
 
+    public void ClearAllBullets()
+    {
+        // 현재 활성화된 모든 PooledBullet을 찾아서 강제 반납
+        var bullets = GetComponentsInChildren<PooledBullet>();
+        foreach (var b in bullets)
+            if (b.gameObject.activeSelf)
+                b.ReleaseSelf();
+    }
     // ── 유틸 ─────────────────────────────────────────────────
 
     private GameObject LoadPrefab(string path)

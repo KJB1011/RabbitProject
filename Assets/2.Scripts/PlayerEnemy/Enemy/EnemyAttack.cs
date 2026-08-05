@@ -152,7 +152,21 @@ public class EnemyAttack : MonoBehaviour
             });
         }
     }
+    // ── 패턴 중지(죽었을때 사용) ────────────────────────────────────
+    public void ClearAll()
+    {
+        StopAllCoroutines();
 
+        // 풀에 있는 모든 AreaDamageZone 비활성화
+        foreach (var zone in _areaPool)
+            if (zone != null && zone.gameObject.activeSelf)
+                zone.gameObject.SetActive(false);
+
+        // 풀에 있는 모든 BulletTelegraph 비활성화
+        foreach (var t in _telegraphPool)
+            if (t != null && t.gameObject.activeSelf)
+                t.Hide();
+    }
     // ── BulletTelegraph 풀 ────────────────────────────────────
 
     private BulletTelegraph GetTelegraph()

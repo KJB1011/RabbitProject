@@ -18,12 +18,14 @@ public class IngameManager : MonoBehaviour
     [Header("노드 전환")]
     [SerializeField] float _nodeTransitionDelay = 5f;
     [SerializeField] GameObject _resultUI;
+    [SerializeField] GameObject _gameoverUI;
     [SerializeField] GameObject _countdownUI;
     [SerializeField] TextMeshProUGUI _countdownText;
     [SerializeField] TextMeshProUGUI _maxDamageText;
     [SerializeField] TextMeshProUGUI _avgDPSText;
     [SerializeField] UISlidePanel _countdownPanel;
     [SerializeField] UISlidePanel _resultPanel;
+    [SerializeField] UISlidePanel _gameoverPanel;
 
     [Header("HP Bar")]
     [SerializeField] UIHPBar _uiHpBar;
@@ -48,6 +50,9 @@ public class IngameManager : MonoBehaviour
     public int _maxDamageInNode = 0;
     public int _totalDamage = 0;
 
+    Vector3 _initCamPos;
+    float _initOrthoSize;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -68,11 +73,19 @@ public class IngameManager : MonoBehaviour
 
     void Start()
     {
+        var cam = Camera.main;
+        if (cam != null)
+        {
+            _initCamPos = cam.transform.position;
+            _initOrthoSize = cam.orthographicSize;
+        }
+
         foreach (var node in _nodes)
             node.gameObject.SetActive(false);
 
         if (_resultUI != null) _resultUI.SetActive(false);
         if (_countdownUI != null) _countdownUI.SetActive(false);
+        if (_gameoverUI != null) _gameoverUI.SetActive(false);
 
         SoundManager.Instance?.CrossFadeBGM("BGM/BattleBGM", 1.5f);
 
@@ -231,6 +244,45 @@ public class IngameManager : MonoBehaviour
         Debug.Log($"[IngameManager] Node {index} 시작: {_nodes[index].GetType().Name}");
     }
 
+    // 현재 노드 재시작
+    public void RestartCurrentNode()
+    {
+        _gameoverPanel?.Hide();
+
+        var cam = Camera.main;
+        if (cam != null)
+        {
+            cam.transform.DOKill();
+            cam.DOKill();
+
+            cam.transform.position = _initCamPos;
+            if (cam.orthographic)
+                cam.orthographicSize = _initOrthoSize;
+        }
+
+        _nodes[_currentIndex].gameObject.SetActive(false);
+
+        var enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
+        foreach (var enemy in enemies)
+            Destroy(enemy.gameObject);
+        VFXManager.Instance.ClearAllBullets();
+
+        if (_player != null)
+        {
+            _player.ResetState();
+            _player.transform.position = _playerStartPos;
+        }
+
+        _maxDamageInNode = 0;
+        _totalDamage = 0;
+        _totalBattleTime = 0f;
+        _isBattle = false;
+
+        GetHPBar()?.Hide();
+        _countdownPanel?.Hide();
+
+        ActivateNode(_currentIndex);
+    }
     // ── 골드 ─────────────────────────────────────────────────
     public void AddGold(int amount)
     {
@@ -259,7 +311,10 @@ public class IngameManager : MonoBehaviour
     {
         _resultPanel.Show();
     }
-
+    public void ShowGameover()
+    {
+        _gameoverPanel.Show();
+    }
     public void SetHPBar(float value)
     {
         _uiHpBar?.SetBarValue(value);
@@ -269,9 +324,14 @@ public class IngameManager : MonoBehaviour
     {
         _player.SetControllable(isOn);
     }
-    public void OnClickRestart()
+    public void OnClickTitle()
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene("LobbyScene");
+    }
+    public void OnClickRestart()
+    {
+        Time.timeScale = 1f;
+        RestartCurrentNode();
     }
 }

@@ -15,35 +15,34 @@ public class ShopSlot : MonoBehaviour,
     [Header("UI 참조")]
     [SerializeField] Image _itemImage;
     [SerializeField] TextMeshProUGUI _priceText;
-    [SerializeField] RectTransform _imageRect;   // 호버 시 커질 이미지
-    [SerializeField] GameObject _descPanel;      // 설명창 루트
-    [SerializeField] TextMeshProUGUI _nameText;  // 이름 텍스트
-    [SerializeField] TextMeshProUGUI _descText;  // 설명 텍스트
+    [SerializeField] RectTransform _imageRect;
+    [SerializeField] GameObject _descPanel;
+    [SerializeField] TextMeshProUGUI _descText;
+
+    [Header("슬롯 설정")]
+    [SerializeField] bool _isFixedItem = false; // 고정 아이템이면 체크
 
     [Header("호버 설정")]
     [SerializeField] float _hoverScale = 1.15f;
     [SerializeField] float _hoverDuration = 0.15f;
 
-    // 슬롯 유형
+    [Header("구매 알림")]
+    [SerializeField] ShopNotification _notification;
+
     public enum SlotType { Artifact, FixedItem }
 
     SlotType _slotType;
-    ArtifactSO _artifactData;   // 아티팩트 슬롯용
-    ITEM _fixedItem;            // 고정 아이템 슬롯용
+    ArtifactSO _artifactData;
+    ITEM _fixedItem;
     int _price;
     bool _sold = false;
     Vector3 _originalScale;
-    bool _showDesc = false;
-
-    Action _onPurchased;        // 구매 완료 시 ShopUI에 알림
+    Action _onPurchased;
 
     // ── 슬롯 초기화 ───────────────────────────────────────────
 
-    /// <summary>아티팩트 슬롯 초기화</summary>
     public void SetupArtifact(ArtifactSO data, Action onPurchased)
     {
-        _showDesc = true;
-
         _slotType = SlotType.Artifact;
         _artifactData = data;
         _onPurchased = onPurchased;
@@ -52,28 +51,26 @@ public class ShopSlot : MonoBehaviour,
 
         _itemImage.sprite = data.icon;
         _itemImage.color = Color.white;
-        _priceText.text = data.price.ToString();
+        _priceText.text = $"{data.price} G";
 
-        if (_descText != null) _nameText.text = data.artifactName;
         if (_descText != null) _descText.text = data.description;
         if (_descPanel != null) _descPanel.SetActive(false);
 
         gameObject.SetActive(true);
     }
 
-    /// <summary>고정 아이템 슬롯 초기화</summary>
     public void SetupFixedItem(ITEM item, Sprite icon, string desc, int price,
-                                System.Action onPurchased = null)
+                                Action onPurchased = null)
     {
         _slotType = SlotType.FixedItem;
         _fixedItem = item;
         _price = price;
-        _onPurchased = onPurchased; // ← 추가
+        _onPurchased = onPurchased;
         _sold = false;
 
         _itemImage.sprite = icon;
         _itemImage.color = Color.white;
-        _priceText.text = price.ToString();
+        _priceText.text = $"{price} G";
 
         if (_descText != null) _descText.text = desc;
         if (_descPanel != null) _descPanel.SetActive(false);
@@ -83,9 +80,8 @@ public class ShopSlot : MonoBehaviour,
 
     void Awake()
     {
-        _originalScale = _imageRect != null
-            ? _imageRect.localScale
-            : Vector3.one;
+        _originalScale = _imageRect != null ? _imageRect.localScale : Vector3.one;
+        if (_descPanel != null) _descPanel.SetActive(false);
     }
 
     // ── 호버 ─────────────────────────────────────────────────
@@ -96,8 +92,8 @@ public class ShopSlot : MonoBehaviour,
             _imageRect.DOScale(_originalScale * _hoverScale, _hoverDuration)
                       .SetEase(Ease.OutBack);
 
-        // _showDesc가 true일 때만 설명창 표시
-        if (_showDesc && _descPanel != null)
+        // 고정 아이템은 설명창 안 열림
+        if (!_isFixedItem && _descPanel != null)
             _descPanel.SetActive(true);
     }
 
@@ -117,33 +113,29 @@ public class ShopSlot : MonoBehaviour,
     {
         if (_sold) return;
 
-        // 골드 확인
         if (IngameManager.Instance.Gold < _price)
         {
             ShowFloatingText("자금 부족!", Color.red);
             return;
         }
 
-        // 구매 처리
         IngameManager.Instance.SpendGold(_price);
 
         switch (_slotType)
         {
             case SlotType.Artifact:
                 ArtifactManager.Instance.Acquire(_artifactData.id);
-                // 아티팩트는 구매 후 슬롯 숨기기
                 _sold = true;
                 _itemImage.color = new Color(1f, 1f, 1f, 0.3f);
-                _priceText.text = "구매완료";
+                _priceText.text = "구매 완료";
                 break;
 
             case SlotType.FixedItem:
                 ApplyFixedItem();
-                // 소모품은 계속 구매 가능
                 break;
         }
 
-        ShowFloatingText("구매완료!", new Color(0.3f, 1f, 0.3f));
+        ShowFloatingText("구매완료!", new Color(0.2f, 0.9f, 0.2f));
         _onPurchased?.Invoke();
     }
 
@@ -160,20 +152,15 @@ public class ShopSlot : MonoBehaviour,
         }
     }
 
-    // ── FloatingText ─────────────────────────────────────────
+    // ── 알림 텍스트 ──────────────────────────────────────────
 
     private void ShowFloatingText(string content, Color color)
     {
-        FloatingTextManager.Instance.ShowCustom(content, color, 2.5f, GetWorldPos());
-    }
-
-    private Vector3 GetWorldPos()
-    {
-        Vector3 screenPos = transform.position;
-        float depth = Mathf.Abs(Camera.main.transform.position.z);
-        Vector3 world = Camera.main.ScreenToWorldPoint(
-            new Vector3(screenPos.x, screenPos.y, depth));
-        world.z = 0f;
-        return world;
+        if (_notification == null)
+        {
+            Debug.LogWarning("[ShopSlot] _notification이 연결되지 않았습니다.");
+            return;
+        }
+        _notification.Show(content, color, transform.position);
     }
 }

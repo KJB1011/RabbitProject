@@ -289,7 +289,36 @@ public class PlayerController : MonoBehaviour
         if (_invincibleCount <= 0)
             _playerHitBox.enabled = true;
     }
+    // 노드 재시작용 초기화
+    public void ResetState()
+    {
+        _hp = _maxHp;
+        _isAttack = false;
+        _isDashing = false;
+        _isGameOver = false;
+        _invincibleCount = 0;
+        _damageMultiplier = 1f;
 
+        _playerHitBox.enabled = true;
+        _spriteRenderer.enabled = true;
+        _trailRenderer.enabled = false;
+
+        // 쿨다운 초기화
+        _mainSkillCooldown = 0f;
+        _subSkillCooldown = 0f;
+        _superSkillCooldown = 0f;
+        _specialSkillCooldown = 0f;
+        _uiPlayerSkill.SetCoolDown(Defines.SKILL.MAIN, 0f);
+        _uiPlayerSkill.SetCoolDown(Defines.SKILL.SUB, 0f);
+        _uiPlayerSkill.SetCoolDown(Defines.SKILL.SUPER, 0f);
+        _uiPlayerSkill.SetCoolDown(Defines.SKILL.SPECIAL, 0f);
+
+        // HP 텍스트 갱신
+        if (_hpTxt != null)
+            _hpTxt.text = _hp.ToString();
+
+        SetControllable(true);
+    }
     // ── 아이템 효과 적용 메서드 ─────────────────────────────
     public void RecoverHp(int amount)
     {
@@ -428,6 +457,7 @@ public class PlayerController : MonoBehaviour
 public void DamageTaken()
 {
     if (_isInvincible) return;
+    if (_isGameOver) return;
 
     _hp--;
     _hpTxt.text = _hp.ToString();
@@ -472,7 +502,7 @@ public void DamageTaken()
 
         Time.timeScale = 0f;
 
-        IngameManager.Instance.ShowResult();
+        IngameManager.Instance.ShowGameover();
     }
 
     // ── 피격 무적 + 깜빡임 ───────────────────────────────────

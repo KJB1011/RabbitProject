@@ -48,6 +48,15 @@ public abstract class EnemyBase : MonoBehaviour
 
     protected virtual void Die()
     {
+        // 패턴 즉시 중단
+        StopAllCoroutines();
+        var attack = GetComponent<EnemyAttack>();
+        if (attack != null)
+            attack.ClearAll();
+
+        // 탄환 전체 제거
+        VFXManager.Instance.ClearAllBullets();
+
         var player = FindFirstObjectByType<PlayerController>();
         if (player != null)
             player.StartInvincible(5f);
@@ -60,13 +69,9 @@ public abstract class EnemyBase : MonoBehaviour
 
         OnDied?.Invoke();
 
-        StopAllCoroutines();
-
         var rb = GetComponent<Rigidbody2D>();
         if (rb != null)
-        {
             rb.linearVelocity = Vector2.zero;
-        }
 
         StartCoroutine(DeathRoutine());
     }

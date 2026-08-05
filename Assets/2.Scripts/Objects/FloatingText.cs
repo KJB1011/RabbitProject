@@ -54,4 +54,10 @@ public class FloatingText : MonoBehaviour
         _sequence?.Kill();
         gameObject.SetActive(false);
     }
+
+    public void PushUp(float offset)
+    {
+        // 현재 위치에서 offset만큼 위로 이동
+        transform.position += Vector3.up * offset;
+    }
 }
