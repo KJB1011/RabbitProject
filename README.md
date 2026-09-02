@@ -6,8 +6,8 @@
 
 ## Play / Demo
 
-- Play on itch.io: `[https://kjb001011.itch.io/rabbitprojecttest]`
-- Gameplay video: `[아직 미완성]`
+- 게임플레이 영상: `https://youtu.be/AVceYGtCO7s`
+- 다운로드하지 않고 플레이: `https://kjb001011.itch.io/rabbitprojecttest`
 
 ![gameplay](docs/gameplay.gif)
 
