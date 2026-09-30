@@ -198,13 +198,13 @@ public class Enemy_Boss : EnemyController
 
         Vector3 pPos = playerObj.transform.position;
 
-        // 플레이어 바깥쪽 3곳에 범위 공격
+        // 플레이어 바깥쪽 4곳에 범위 공격
         Vector3[] outerPositions = new Vector3[]
         {
-            pPos + Vector3.right  * 3f,
-            pPos + Vector3.left   * 3f,
-            pPos + Vector3.up     * 3f,
-            pPos + Vector3.down   * 3f,
+            pPos + Vector3.right  * 4f,
+            pPos + Vector3.left   * 4f,
+            pPos + Vector3.up     * 4f,
+            pPos + Vector3.down   * 4f,
         };
 
         bool outerDone = false;

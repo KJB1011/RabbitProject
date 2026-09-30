@@ -2758,10 +2758,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d1fe3d8e394e0b4d93a7ced3ad07e60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatNode
-  _enemyPrefabs:
-  - {fileID: 7302269988202185816, guid: 019885a4a40aa1b4098492cb4685abe9, type: 3}
-  _spawnPoints:
-  - {fileID: 1568581760}
+  _enemyPrefab: {fileID: 7302269988202185816, guid: 019885a4a40aa1b4098492cb4685abe9, type: 3}
+  _spawnPoint: {fileID: 1568581760}
 --- !u!4 &557452286 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3046483565569023314, guid: 4745716f4e419354a9751a1ce7e941a0, type: 3}
@@ -4917,10 +4915,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d1fe3d8e394e0b4d93a7ced3ad07e60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatNode
-  _enemyPrefabs:
-  - {fileID: 7002381502864860115, guid: 3a1dad3c30ef9614b8f072f7befe21b6, type: 3}
-  _spawnPoints:
-  - {fileID: 888568292}
+  _enemyPrefab: {fileID: 7002381502864860115, guid: 3a1dad3c30ef9614b8f072f7befe21b6, type: 3}
+  _spawnPoint: {fileID: 888568292}
 --- !u!4 &1117887999
 Transform:
   m_ObjectHideFlags: 0
@@ -5911,6 +5907,7 @@ MonoBehaviour:
   _vfxMaxSize: 50
   _bulletDefaultCapacity: 32
   _bulletMaxSize: 200
+  _usePooling: 1
 --- !u!4 &1317788118
 Transform:
   m_ObjectHideFlags: 0
@@ -7334,7 +7331,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1847572465}
   m_Layer: 0
-  m_Name: Node
+  m_Name: 1_StageNode
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

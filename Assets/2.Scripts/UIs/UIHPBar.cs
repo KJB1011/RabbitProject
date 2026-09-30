@@ -9,22 +9,18 @@ public class UIHPBar : MonoBehaviour
     [SerializeField] Slider _hpSlider;
     [SerializeField] GameObject _contents;
 
-    EnemyController _enemy;
-
     void Start()
     {
         Hide();
     }
 
-    public void SetEnemy(EnemyController enemy)
+    public void Show()
     {
-        _enemy = enemy;
         _hpSlider.value = 1f;
-
         if (_contents != null) _contents.SetActive(true);
     }
 
-    // 적이 데미지를 받을 때마다 호출됨
+    // 적이 데미지를 받을 때마다 호출
     public void SetBarValue(float hpRate)
     {
         _hpSlider.value = hpRate;
@@ -35,8 +31,6 @@ public class UIHPBar : MonoBehaviour
 
     public void Hide()
     {
-        _enemy = null;
-
         if (_contents != null) _contents.SetActive(false);
     }
 }

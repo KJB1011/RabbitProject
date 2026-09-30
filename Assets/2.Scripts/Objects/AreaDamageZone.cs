@@ -41,7 +41,9 @@ public class AreaDamageZone : MonoBehaviour
 
     private void DealDamage(Vector3 pos, Vector2 size)
     {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(pos, size.x * 0.5f);
+        float radius = size.x * 0.5f;
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(pos, radius);
 
         foreach (var hit in hits)
         {
@@ -50,5 +52,14 @@ public class AreaDamageZone : MonoBehaviour
             player.DamageTaken();
             break;
         }
+    }
+
+    // 진행 중인 공격을 즉시 중단 (시전자가 사망했을 때)
+    public void Cancel()
+    {
+        StopAllCoroutines();
+        _telegraph.Hide(); // 무한 루프 pulse tween Kill
+        _onComplete = null;
+        gameObject.SetActive(false);
     }
 }

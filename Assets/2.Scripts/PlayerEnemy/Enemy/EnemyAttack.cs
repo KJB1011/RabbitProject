@@ -1,35 +1,49 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
-/// EnemyÀÇ °ø°İÀ» ´ã´çÇÏ´Â ½ºÅ©¸³Æ®
-/// 1. ¹æ»çÇü Åº¸· - ÁÖº¯¿¡ Èğ»Ñ¸®´Â Çü½ÄÀÇ Åº¸·
-/// 2. ´Ü¹ß Åº¸· - Æ¯Á¤ À§Ä¡·Î ºü¸£°Ô ¹ß»çÇÏ´Â ÀûÀº ¼öÀÇ Åº¸·
-/// 3. ¹üÀ§ °ø°İ - ¿ø¸ğ¾çÀÇ ³ĞÀº ¹üÀ§¿¡ µ¥¹ÌÁö¸¦ ÀÔÈ÷´Â °ø°İ
+/// Enemyì˜ ê³µê²©ì„ ë‹´ë‹¹í•˜ëŠ” ìŠ¤í¬ë¦½íŠ¸
+/// 1. ë°©ì‚¬í˜• íƒ„ë§‰ - ì£¼ë³€ì— í©ë¿Œë¦¬ëŠ” í˜•ì‹ì˜ íƒ„ë§‰
+/// 2. ë‹¨ë°œ íƒ„ë§‰ - íŠ¹ì • ìœ„ì¹˜ë¡œ ë¹ ë¥´ê²Œ ë°œì‚¬í•˜ëŠ” ì ì€ ìˆ˜ì˜ íƒ„ë§‰
+/// 3. ë²”ìœ„ ê³µê²© - ì›ëª¨ì–‘ì˜ ë„“ì€ ë²”ìœ„ì— ë°ë¯¸ì§€ë¥¼ ì…íˆëŠ” ê³µê²©
 /// </summary>
 public class EnemyAttack : MonoBehaviour
 {
-    [Header("¹æ»çÇü Åº¸·")]
+    [Header("ë°©ì‚¬í˜• íƒ„ë§‰")]
     [SerializeField] public int bulletCount = 16;
     [SerializeField] private float bulletSpeed = 4f;
 
-    [Header("´Ü¹ß Åº¸·")]
+    [Header("ë‹¨ë°œ íƒ„ë§‰")]
     [SerializeField] private float fastBulletSpeed = 12f;
 
-    [Header("¹üÀ§ °ø°İ")]
+    [Header("ë²”ìœ„ ê³µê²©")]
     [SerializeField] private GameObject _areaDamageZonePrefab;
     [SerializeField] private float _areaTelegraphDuration = 1.5f;
 
-    [Header("Åº¸· ±ËÀû ÀüÁ¶")]
-    [SerializeField] private GameObject _bulletTelegraphPrefab; // BulletTelegraph ÇÁ¸®ÆÕ
-    [SerializeField] private float _telegraphDuration = 0.8f;  // ÀüÁ¶ Ç¥½Ã ½Ã°£
+    [Header("íƒ„ë§‰ ê¶¤ì  ì „ì¡°")]
+    [SerializeField] private GameObject _bulletTelegraphPrefab; // BulletTelegraph í”„ë¦¬íŒ¹
+    [SerializeField] private float _telegraphDuration = 0.8f;  // ì „ì¡° í‘œì‹œ ì‹œê°„
 
-    // ±ËÀû ¹× ¹üÀ§°ø°İ ÀÎ½ºÅÏ½º Ç®
-    private List<BulletTelegraph> _telegraphPool = new();
-    private Queue<AreaDamageZone> _areaPool = new();
-    // ¦¡¦¡ ¹æ»çÇü Åº¸· (ÀüÁ¶ ¾øÀ½) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // ê²½ê³ ì„ Â·ë²”ìœ„ ê³µê²© ì¸ìŠ¤í„´ìŠ¤ í’€
+    private readonly List<BulletTelegraph> _telegraphPool = new();
+    private readonly List<AreaDamageZone> _allZones = new();     // ìƒì„±ëœ ì „ë¶€ (ClearAll ìš©)
+    private readonly Queue<AreaDamageZone> _idleZones = new();   // ëŒ€ê¸° ì¤‘ (ì¬ì‚¬ìš© ìš©)
+    private Transform _attackRoot;
 
+    void Awake()
+    {
+        _attackRoot = new GameObject($"{name}_Attacks").transform;
+    }
+
+    void OnDestroy()
+    {
+        // ë…¸ë“œ ì¬ì‹œì‘ ì‹œ ì ì´ Destroy ë˜ë©´ ê³µê²© ì˜¤ë¸Œì íŠ¸ë„ í•¨ê»˜ ì •ë¦¬
+        if (_attackRoot != null)
+            Destroy(_attackRoot.gameObject);
+    }
+
+    // â”€â”€ ë°©ì‚¬í˜• íƒ„ë§‰ (ì „ì¡° ì—†ìŒ) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     public void FireRadialAttack()
     {
         float angleStep = 360f / bulletCount;
@@ -44,7 +58,7 @@ public class EnemyAttack : MonoBehaviour
         }
     }
 
-    // ¦¡¦¡ ¹æ»çÇü Åº¸· (±ËÀû ÀüÁ¶ ÀÖÀ½) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€ ë°©ì‚¬í˜• íƒ„ë§‰ (ê¶¤ì  ì „ì¡° ìˆìŒ) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public void FireRadialAttackWithTelegraph(System.Action onComplete = null)
     {
@@ -53,7 +67,7 @@ public class EnemyAttack : MonoBehaviour
 
     private IEnumerator RadialTelegraphRoutine(System.Action onComplete)
     {
-        // 1) ¹æÇâº° ±ËÀû Ç¥½Ã
+        // 1) ë°©í–¥ë³„ ê¶¤ì  í‘œì‹œ
         float angleStep = 360f / bulletCount;
         var telegraphs = new List<BulletTelegraph>();
 
@@ -69,10 +83,10 @@ public class EnemyAttack : MonoBehaviour
             telegraphs.Add(telegraph);
         }
 
-        // 2) ÀüÁ¶ ½Ã°£ ´ë±â
+        // 2) ì „ì¡° ì‹œê°„ ëŒ€ê¸°
         yield return new WaitForSeconds(_telegraphDuration);
 
-        // 3) ±ËÀû ÆäÀÌµå ¾Æ¿ô + µ¿½Ã¿¡ Åº¸· ¹ß»ç
+        // 3) ê¶¤ì  í˜ì´ë“œ ì•„ì›ƒ + ë™ì‹œì— íƒ„ë§‰ ë°œì‚¬
         foreach (var t in telegraphs)
             t.Hide(() => ReturnTelegraph(t));
 
@@ -82,7 +96,7 @@ public class EnemyAttack : MonoBehaviour
         onComplete?.Invoke();
     }
 
-    // ¦¡¦¡ ´Ü¹ß ¹ß»ç ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€ ë‹¨ë°œ ë°œì‚¬ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public void FireSingleShot(Vector2 targetPosition)
     {
@@ -91,7 +105,7 @@ public class EnemyAttack : MonoBehaviour
             dir * fastBulletSpeed);
     }
 
-    // ¦¡¦¡ ´Ü¹ß ¹ß»ç (±ËÀû ÀüÁ¶ ÀÖÀ½) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€ ë‹¨ë°œ ë°œì‚¬ (ê¶¤ì  ì „ì¡° ìˆìŒ) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public void FireSingleShotWithTelegraph(Vector2 targetPosition,
                                              System.Action onComplete = null)
@@ -116,7 +130,7 @@ public class EnemyAttack : MonoBehaviour
         onComplete?.Invoke();
     }
 
-    // ¦¡¦¡ ¹üÀ§ °ø°İ ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€ ë²”ìœ„ ê³µê²© â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public void FireAreaAttack(Vector3 pos, Vector2 size, float angle = 0f,
                                System.Action onComplete = null)
@@ -124,7 +138,7 @@ public class EnemyAttack : MonoBehaviour
         var zone = GetAreaZone();
         if (zone == null) return;
 
-        // ¹İ³³ Äİ¹éÀ» onComplete¿¡ Ãß°¡
+        // ë°˜ë‚© ì½œë°±ì„ onCompleteì— ì¶”ê°€
         zone.Fire(pos, size, _areaTelegraphDuration, angle, () =>
         {
             ReturnAreaZone(zone);
@@ -152,37 +166,38 @@ public class EnemyAttack : MonoBehaviour
             });
         }
     }
-    // ¦¡¦¡ ÆĞÅÏ ÁßÁö(Á×¾úÀ»¶§ »ç¿ë) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€ íŒ¨í„´ ì¤‘ì§€(ì£½ì—ˆì„ë•Œ ì‚¬ìš©) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     public void ClearAll()
     {
         StopAllCoroutines();
 
-        // Ç®¿¡ ÀÖ´Â ¸ğµç AreaDamageZone ºñÈ°¼ºÈ­
-        foreach (var zone in _areaPool)
-            if (zone != null && zone.gameObject.activeSelf)
-                zone.gameObject.SetActive(false);
+        foreach (var zone in _allZones)
+        {
+            if (!zone.gameObject.activeSelf) continue;   // í™œì„± = ì‚¬ìš© ì¤‘ (ëŒ€ê¸° ì¤‘ì¸ ê²ƒì€ í•­ìƒ ë¹„í™œì„±)
+            zone.Cancel();
+            _idleZones.Enqueue(zone);
+        }
 
-        // Ç®¿¡ ÀÖ´Â ¸ğµç BulletTelegraph ºñÈ°¼ºÈ­
         foreach (var t in _telegraphPool)
-            if (t != null && t.gameObject.activeSelf)
+            if (t.gameObject.activeSelf)
                 t.Hide();
     }
-    // ¦¡¦¡ BulletTelegraph Ç® ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€ BulletTelegraph í’€ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private BulletTelegraph GetTelegraph()
     {
-        // ºñÈ°¼º »óÅÂÀÎ Ç® Ç×¸ñ Àç»ç¿ë
+        // ë¹„í™œì„± ìƒíƒœì¸ í’€ í•­ëª© ì¬ì‚¬ìš©
         foreach (var t in _telegraphPool)
             if (!t.gameObject.activeSelf) return t;
 
-        // ¾øÀ¸¸é »õ·Î »ı¼º
+        // ì—†ìœ¼ë©´ ìƒˆë¡œ ìƒì„±
         if (_bulletTelegraphPrefab == null)
         {
-            Debug.LogWarning("[EnemyAttack] _bulletTelegraphPrefabÀÌ ¿¬°áµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+            Debug.LogWarning("[EnemyAttack] _bulletTelegraphPrefabì´ ì—°ê²°ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return null;
         }
 
-        var go = Instantiate(_bulletTelegraphPrefab, transform);
+        var go = Instantiate(_bulletTelegraphPrefab, _attackRoot);
         var bt = go.GetComponent<BulletTelegraph>();
         _telegraphPool.Add(bt);
         return bt;
@@ -193,30 +208,22 @@ public class EnemyAttack : MonoBehaviour
         if (telegraph != null)
             telegraph.gameObject.SetActive(false);
     }
-    // ¦¡¦¡ AreaDamageZone Ç® ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€ AreaDamageZone í’€ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private AreaDamageZone GetAreaZone()
     {
-        // ºñÈ°¼º »óÅÂÀÎ Ç×¸ñ Àç»ç¿ë
-        if (_areaPool.Count > 0)
-        {
-            var zone = _areaPool.Dequeue();
-            if (zone != null)
-            {
-                zone.gameObject.SetActive(true);
-                return zone;
-            }
-        }
+        if (_idleZones.Count > 0)
+            return _idleZones.Dequeue();   // Fire() ì•ˆì—ì„œ SetActive(true) í•˜ë¯€ë¡œ ì—¬ê¸°ì„œëŠ” ì•ˆ ì¼¬
 
-        // Ç® ¼ÒÁø ½Ã »õ·Î »ı¼º
         if (_areaDamageZonePrefab == null) return null;
-        var go = Instantiate(_areaDamageZonePrefab, transform);
-        return go.GetComponent<AreaDamageZone>();
+
+        var zone = Instantiate(_areaDamageZonePrefab, _attackRoot).GetComponent<AreaDamageZone>();
+        _allZones.Add(zone);
+        return zone;
     }
 
     private void ReturnAreaZone(AreaDamageZone zone)
     {
-        if (zone == null) return;
         zone.gameObject.SetActive(false);
-        _areaPool.Enqueue(zone);
+        _idleZones.Enqueue(zone);
     }
 }

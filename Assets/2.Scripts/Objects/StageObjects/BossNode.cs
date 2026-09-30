@@ -44,7 +44,7 @@ public class BossNode : NodeBase
         _boss.OnDied += HandleBossDied;
 
         _hpBar = IngameManager.Instance.GetHPBar();
-        _hpBar?.SetEnemy(_boss);
+        _hpBar?.Show();
     }
 
     private void HandleBossDied()

@@ -1,87 +1,56 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 /// <summary>
-/// ÀÏ¹İ ÀûÀÌ ³ª¿À´Â ³ëµå
+/// ì¼ë°˜ ì „íˆ¬ ë…¸ë“œ â€” ì  1ë§ˆë¦¬ë¥¼ ì†Œí™˜í•˜ê³ , ì²˜ì¹˜í•˜ë©´ ì™„ë£Œ
 /// </summary>
 public class CombatNode : NodeBase
 {
-    [Header("Àû ÇÁ¸®ÆÕ ¹× ½ºÆù À§Ä¡")]
-    [SerializeField] private GameObject[] _enemyPrefabs;
-    [SerializeField] private Transform[] _spawnPoints; // ¾øÀ¸¸é (0,0,0)¿¡ ½ºÆù
+    [Header("ì  í”„ë¦¬íŒ¹ Â· ìŠ¤í° ìœ„ì¹˜")]
+    [SerializeField] private GameObject _enemyPrefab;
+    [SerializeField] private Transform _spawnPoint; // ë¹„ìš°ë©´ (0,0,0)
 
-    private EnemyController[] _enemies;
-    private int _aliveCount;
+    private EnemyController _enemy;
     private UIHPBar _hpBar;
 
     protected override void OnNodeStart()
     {
         IngameManager.Instance._isBattle = true;
 
-        _aliveCount = _enemyPrefabs.Length;
-        _enemies = new EnemyController[_enemyPrefabs.Length];
-
-        for (int i = 0; i < _enemyPrefabs.Length; i++)
+        if (_enemyPrefab == null)
         {
-            if (_enemyPrefabs[i] == null)
-            {
-                Debug.LogError($"[CombatNode] _enemyPrefabs[{i}]°¡ nullÀÔ´Ï´Ù.");
-                _aliveCount--;
-                continue;
-            }
-
-            Vector3 pos = (_spawnPoints != null && i < _spawnPoints.Length)
-                ? _spawnPoints[i].position
-                : Vector3.zero;
-
-            var go = Instantiate(_enemyPrefabs[i], pos, Quaternion.identity);
-            go.SetActive(true);
-
-            _enemies[i] = go.GetComponent<EnemyController>();
-            if (_enemies[i] == null)
-            {
-                Debug.LogError($"[CombatNode] {go.name}¿¡ EnemyController°¡ ¾ø½À´Ï´Ù.");
-                _aliveCount--;
-                continue;
-            }
-
-            _enemies[i].OnDied += HandleEnemyDied;
+            Debug.LogError("[CombatNode] _enemyPrefabì´ ë¹„ì–´ ìˆìŠµë‹ˆë‹¤.");
+            Complete();
+            return;
         }
 
-        // HPBar ¿¬°á
-        _hpBar = IngameManager.Instance.GetHPBar();
-        if (_hpBar != null && _enemies.Length > 0 && _enemies[0] != null)
-            _hpBar.SetEnemy(_enemies[0]);
+        Vector3 pos = _spawnPoint != null ? _spawnPoint.position : Vector3.zero;
+        var go = Instantiate(_enemyPrefab, pos, Quaternion.identity);
+        go.SetActive(true);
 
-        if (_aliveCount <= 0)
+        _enemy = go.GetComponent<EnemyController>();
+        if (_enemy == null)
+        {
+            Debug.LogError($"[CombatNode] {go.name}ì— EnemyControllerê°€ ì—†ìŠµë‹ˆë‹¤.");
             Complete();
+            return;
+        }
+
+        _enemy.OnDied += HandleEnemyDied;
+
+        _hpBar = IngameManager.Instance.GetHPBar();
+        _hpBar?.Show();
     }
 
     private void HandleEnemyDied()
     {
-        _aliveCount--;
-
-        if (_aliveCount > 0 && _hpBar != null)
-        {
-            foreach (var e in _enemies)
-            {
-                if (e != null && e.gameObject.activeSelf)
-                {
-                    _hpBar.SetEnemy(e);
-                    break;
-                }
-            }
-        }
-        else if (_aliveCount <= 0)
-        {
-            Complete();
-        }
+        _enemy.OnDied -= HandleEnemyDied;
+        Complete();
     }
 
     private void OnDisable()
     {
-        if (_enemies != null)
-            foreach (var e in _enemies)
-                if (e != null) e.OnDied -= HandleEnemyDied;
+        if (_enemy != null)
+            _enemy.OnDied -= HandleEnemyDied;
 
         _hpBar?.Hide();
     }
