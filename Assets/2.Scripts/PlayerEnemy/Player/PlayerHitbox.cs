@@ -1,9 +1,8 @@
-using UnityEngine;
-using static Defines;
+ï»¿using UnityEngine;
 
 /// <summary>
-/// PlayerÀÇ È÷Æ®¹Ú½º ÆÇÁ¤
-/// ÇÃ·¹ÀÌ¾î°¡ EnemyÀÇ °ø°İ¿¡ ¸Â´Â ÆÇÁ¤
+/// Playerì˜ íˆíŠ¸ë°•ìŠ¤ íŒì •
+/// í”Œë ˆì´ì–´ê°€ Enemyì˜ íƒ„í™˜ì— ë§ëŠ” íŒì •ì„ í•œ ê³³ì—ì„œ ì²˜ë¦¬í•©ë‹ˆë‹¤.
 /// </summary>
 public class PlayerHitbox : MonoBehaviour
 {
@@ -13,10 +12,13 @@ public class PlayerHitbox : MonoBehaviour
     {
         if (!other.CompareTag("EnemyBullet")) return;
 
-        // ¹«Àû »óÅÂ¸é ÀÌÆåÆ®µµ Æ÷ÇÔÇØ¼­ ÀüºÎ ¹«½Ã
-        if (owner._isInvincible) return;
+        // ë¬´ì  Â· ê²Œì„ì˜¤ë²„ë©´ false â€” ì´í™íŠ¸ ì—†ì´ ë¬´ì‹œ
+        if (!owner.DamageTaken()) return;
 
-        owner.DamageTaken();
         VFXManager.Instance.Play("PlayerHit", transform.position);
+
+        // ë§ì€ íƒ„í™˜ì€ ì¦‰ì‹œ í’€ë¡œ ë°˜ë‚©
+        if (other.TryGetComponent(out PooledBullet bullet))
+            bullet.ReleaseSelf();
     }
 }

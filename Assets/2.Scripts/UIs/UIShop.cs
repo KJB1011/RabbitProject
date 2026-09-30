@@ -49,7 +49,7 @@ public class UIShop : MonoBehaviour
     private void SetupArtifactSlots()
     {
         var available = _allArtifacts
-            .Where(a => !ArtifactManager.Instance.HasArtifact(a.id))
+            .Where(a => !ArtifactManager.Instance.HasArtifact(a))
             .OrderBy(_ => Random.value)
             .Take(_artifactSlots.Length)
             .ToList();

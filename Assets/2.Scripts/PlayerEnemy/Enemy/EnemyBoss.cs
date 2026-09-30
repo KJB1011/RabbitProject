@@ -105,10 +105,10 @@ public class Enemy_Boss : EnemyController
             yield return StartCoroutine(MoveToPosition(target));
             yield return new WaitForSeconds(0.2f);
 
-            _attack.bulletCount = _isPhase2 ? _phase2BulletCount : _phase1BulletCount;
+            int bulletCount = _isPhase2 ? _phase2BulletCount : _phase1BulletCount;
 
             bool done = false;
-            _attack.FireRadialAttackWithTelegraph(() => done = true);
+            _attack.FireRadialAttackWithTelegraph(bulletCount, () => done = true);
             yield return new WaitUntil(() => done);
 
             yield return new WaitForSeconds(1f);
@@ -151,12 +151,9 @@ public class Enemy_Boss : EnemyController
 
     IEnumerator PatternFocus()
     {
-        var playerObj = GameObject.FindWithTag("Player");
-        Vector2 playerPos = playerObj != null
-            ? (Vector2)playerObj.transform.position : Vector2.zero;
+        Vector2 playerPos = PlayerTF != null ? (Vector2)PlayerTF.position : Vector2.zero;
 
-        Vector2 moveTarget = playerPos.x > 0
-            ? new Vector2(-5f, 0f) : new Vector2(5f, 0f);
+        Vector2 moveTarget = playerPos.x > 0 ? new Vector2(-5f, 0f) : new Vector2(5f, 0f);
 
         yield return StartCoroutine(MoveToPosition(moveTarget));
         yield return new WaitForSeconds(0.3f);
@@ -164,7 +161,7 @@ public class Enemy_Boss : EnemyController
         int waves = _isPhase2 ? _focusWaveCount + 1 : _focusWaveCount;
         for (int w = 0; w < waves; w++)
         {
-            if (playerObj != null) playerPos = playerObj.transform.position;
+            if (PlayerTF != null) playerPos = PlayerTF.position;
             SoundManager.Instance?.PlaySFX("SFX/BulletFire");
 
             Vector2 baseDir = (playerPos - (Vector2)transform.position).normalized;
@@ -193,10 +190,9 @@ public class Enemy_Boss : EnemyController
         yield return StartCoroutine(MoveToPosition(Vector2.zero));
         yield return new WaitForSeconds(0.3f);
 
-        var playerObj = GameObject.FindWithTag("Player");
-        if (playerObj == null) yield break;
+        if (PlayerTF == null) yield break;
 
-        Vector3 pPos = playerObj.transform.position;
+        Vector3 pPos = PlayerTF.position;
 
         // 플레이어 바깥쪽 4곳에 범위 공격
         Vector3[] outerPositions = new Vector3[]
@@ -215,7 +211,7 @@ public class Enemy_Boss : EnemyController
 
         // 플레이어 바로 위치에 큰 범위 공격
         bool finalDone = false;
-        _attack.FireAreaAttackAtPlayer(_areaLargeSize, () => finalDone = true);
+        _attack.FireAreaAttack(PlayerTF.position, _areaLargeSize, 0f, () => finalDone = true);
         yield return new WaitUntil(() => finalDone);
     }
 
@@ -280,18 +276,17 @@ public class Enemy_Boss : EnemyController
         // 열 단위로 순차 발사 - 같은 열의 3개는 동시에
         foreach (int col in colOrder)
         {
-            int remaining = rowY.Length;
             foreach (float y in rowY)
             {
                 Vector3 pos = new Vector3(colX[col], y, 0f);
-                _attack.FireAreaAttack(pos, _areaSize, 0f, () => remaining--);
+                _attack.FireAreaAttack(pos, _areaSize, 0f);
             }
 
             // 다음 열 발사까지 텀
             yield return new WaitForSeconds(0.5f);
         }
 
-        // 마지막 열 판정 완료 대기
+        // 마지막 열 폭발은 다음 패턴과 겹쳐 진행됨 (공격 오브젝트는 보스와 분리되어 있어 이동해도 무관)
         yield return new WaitForSeconds(0.5f);
     }
 
@@ -324,24 +319,10 @@ public class Enemy_Boss : EnemyController
         _isPhase2 = true;
         Debug.Log("[Boss] Phase 2 시작!");
     }
-    public override void DamageTaken(int damage)
+    // Phase 2 진입 전에는 HP가 임계값(50%) 아래로 안 내려감
+    protected override int ClampHp(int hp)
     {
-        if (damage <= 0) return;
-
-        _nowHp -= damage;
-
-        // Phase 2 진입 전에는 HP가 임계값(50%) 아래로 안 내려감
-        if (!_isPhase2)
-            _nowHp = Mathf.Max(_nowHp, Mathf.CeilToInt(_totalHp * _phase2Threshold));
-        else
-            _nowHp = Mathf.Max(_nowHp, 0);
-
-        if (IngameManager.Instance._isBattle)
-            IngameManager.Instance.AddDamage(damage);
-
-        IngameManager.Instance.SetHPBar((float)_nowHp / _totalHp);
-
-        if (_nowHp <= 0)
-            Die();
+        if (_isPhase2) return Mathf.Max(hp, 0);
+        return Mathf.Max(hp, Mathf.CeilToInt(_totalHp * _phase2Threshold));
     }
 }

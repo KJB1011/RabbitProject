@@ -28,6 +28,7 @@ public class SpecialSkillEffect : MonoBehaviour
 
     public IEnumerator PlayRoutine(Texture2D screenshot, System.Action onDamage)
     {
+        _screenshot = screenshot;
         _topImage.texture = screenshot;
         _bottomImage.texture = screenshot;
 
@@ -68,6 +69,7 @@ public class SpecialSkillEffect : MonoBehaviour
         gameObject.SetActive(false);
 
         Destroy(screenshot);
+        _screenshot = null;
     }
 
     void OnDestroy()

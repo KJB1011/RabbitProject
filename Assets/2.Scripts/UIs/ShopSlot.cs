@@ -124,7 +124,7 @@ public class ShopSlot : MonoBehaviour,
         switch (_slotType)
         {
             case SlotType.Artifact:
-                ArtifactManager.Instance.Acquire(_artifactData.id);
+                ArtifactManager.Instance.Acquire(_artifactData);
                 _sold = true;
                 _itemImage.color = new Color(1f, 1f, 1f, 0.3f);
                 _priceText.text = "구매 완료";

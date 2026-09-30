@@ -1,8 +1,8 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 /// <summary>
-/// EnemyÀÇ È÷Æ®¹Ú½º
-/// ÇÃ·¹ÀÌ¾î°¡ Enemy¸¦ °ø°İÇÒ ¶§ÀÇ ÆÇÁ¤ °Ë»ç¸¦ ´ã´çÇÑ´Ù.
+/// Enemyì˜ íˆíŠ¸ë°•ìŠ¤
+/// í”Œë ˆì´ì–´ê°€ Enemyë¥¼ ê³µê²©í•  ë•Œ íŒì • ê²€ì‚¬ë¥¼ ë‹´ë‹¹í•œë‹¤.
 /// </summary>
 public class EnemyHitbox : MonoBehaviour
 {
@@ -12,6 +12,7 @@ public class EnemyHitbox : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.CompareTag("PlayerAttack")) return;
+        if (owner.IsDead) return;
 
         var player = other.GetComponentInParent<PlayerController>();
         if (player == null) return;
@@ -19,11 +20,8 @@ public class EnemyHitbox : MonoBehaviour
         int damage = player.DamageReturn(out bool isCrit);
         owner.DamageTaken(damage);
 
-        // ¾ÆÆ¼ÆÑÆ®4(ÀÛÀº Åä³¢ Ä£±¸)°¡ ÂüÁ¶ÇÒ ¸¶Áö¸· ÇÇ°İ Àû µî·Ï
-        ArtifactManager.Instance.LastHitEnemy = owner;
-
-        // ¾ÆÆ¼ÆÑÆ®2,4¿¡°Ô ±âº» °ø°İ ÀûÁß ¾Ë¸²
-        player.NotifyBasicAttackHit();
+        // ì•„í‹°íŒ©íŠ¸ ë°œë™ ì•Œë¦¼ â€” ë§ì€ ì ê³¼ ê³µê²© ì¢…ë¥˜ë¥¼ í•¨ê»˜ ì „ë‹¬
+        player.NotifyAttackHit(owner, player.GetAttackType(other));
 
         DamageTextManager.Instance.Show(damage, isCrit, owner.transform.position);
         Utils.Shake(_spriteTF, this);

@@ -30,17 +30,6 @@ public class PooledBullet : MonoBehaviour
         transform.Translate(_velocity * Time.deltaTime, Space.World);
     }
 
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        if (!other.CompareTag("PlayerHitbox")) return;
-
-        var player = other.GetComponent<PlayerController>();
-        if (player == null) return;
-
-        player.DamageTaken();
-        ReleaseSelf(); // 맞으면 바로 풀로 반납
-    }
-
     // 수명이 다하거나 맞았을 때 풀로 반납
     public void ReleaseSelf()
     {

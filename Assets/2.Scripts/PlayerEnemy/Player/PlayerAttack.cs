@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using System;
+using static Defines;
 
 /// <summary>
 /// Player의 기본공격, Q스킬의 범위 및 연출을 담당하는 스크립트
@@ -22,10 +23,13 @@ public class PlayerAttack : MonoBehaviour
     [SerializeField] Transform _attackAreaPos2;
     [SerializeField] float _superRangeMultiplier = 4f;
     [SerializeField] float _superActiveTime = 0.1f;
-    [SerializeField] Color _superVFXColor = new Color(1f, 0.5f, 0f);
 
     Vector2 _defaultColSize;
     Vector2 _defaultColSize2;
+
+    // 적중한 콜라이더가 어떤 공격인지 반환 (아티팩트 발동 조건 구분용)
+    public AttackType GetAttackType(Collider2D col)
+    => col == _attackArea2 ? AttackType.Super : AttackType.Basic;
 
     void Awake()
     {
@@ -60,17 +64,11 @@ public class PlayerAttack : MonoBehaviour
         _attackArea.size = _defaultColSize * multiplier;
 
         SoundManager.Instance.PlaySFX("SFX/Sword");
-        GameObject prefab = Resources.Load<GameObject>("VFX/SwordVFX");
-        GameObject go = null;
-        if (prefab != null)
-        {
-            go = Instantiate(prefab, (Vector2)_attackAreaPos.position, transform.rotation, _attackAreaPos);
-            go.transform.localScale = Vector3.one * multiplier;
-        }
+        var vfx = VFXManager.Instance.Play("SwordVFX", (Vector2)_attackAreaPos.position, transform.rotation);
+        if (vfx != null) vfx.transform.localScale = Vector3.one * multiplier;
 
         yield return new WaitForSeconds(_basicActiveTime);
         _attackArea.enabled = false;
-        if (go != null) Destroy(go);
         onComplete?.Invoke();
     }
     // ── Q 스킬 ─────────────────────────────────────────────
@@ -88,20 +86,11 @@ public class PlayerAttack : MonoBehaviour
         _attackArea2.size = _defaultColSize2 * multiplier;
 
         SoundManager.Instance.PlaySFX("SFX/StrongSword");
-        GameObject prefab = Resources.Load<GameObject>("VFX/SwordVFX2");
-        GameObject go = null;
-        if (prefab != null)
-        {
-            go = Instantiate(prefab, (Vector2)_attackAreaPos2.position, transform.rotation, _attackAreaPos2);
-            go.transform.localScale = Vector3.one * _superRangeMultiplier;
-
-            var sr = go.GetComponentInChildren<SpriteRenderer>();
-            if (sr != null) sr.color = _superVFXColor;
-        }
+        var vfx = VFXManager.Instance.Play("SwordVFX2", (Vector2)_attackAreaPos2.position, transform.rotation);
+        if (vfx != null) vfx.transform.localScale = Vector3.one * _superRangeMultiplier;
 
         yield return new WaitForSeconds(_superActiveTime);
         _attackArea2.enabled = false;
-        if (go != null) Destroy(go);
         onComplete?.Invoke();
     }
 }

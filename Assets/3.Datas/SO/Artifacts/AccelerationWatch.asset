@@ -9,12 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b04eadb4a2d8e147be740855723f31f, type: 3}
+  m_Script: {fileID: 11500000, guid: f6161c95dcdca974d9b1090691a9cd90, type: 3}
   m_Name: AccelerationWatch
   m_EditorClassIdentifier: Assembly-CSharp::ArtifactSO
-  id: 1
   artifactName: "\uAC00\uC18D\uC758 \uD68C\uC911\uC2DC\uACC4"
   description: "\uAE30\uBCF8 \uACF5\uACA9 \uC801\uC911\uC2DC, Q\uC2A4\uD0AC\uC758
     \uCFE8\uD0C0\uC784 0.2\uCD08 \uAC10\uC18C"
   icon: {fileID: 21300000, guid: bdfa373529f69a943917285f9b6132b6, type: 3}
   price: 25
+  _cooldownReduce: 0.2

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Serialization;
 
 /// <summary>
 /// Enemy의 공격을 담당하는 스크립트
@@ -11,7 +12,8 @@ using System.Collections.Generic;
 public class EnemyAttack : MonoBehaviour
 {
     [Header("방사형 탄막")]
-    [SerializeField] public int bulletCount = 16;
+    [FormerlySerializedAs("bulletCount")]
+    [SerializeField] public int _defaultBulletCount = 16;
     [SerializeField] private float bulletSpeed = 4f;
 
     [Header("단발 탄막")]
@@ -44,7 +46,7 @@ public class EnemyAttack : MonoBehaviour
     }
 
     // ── 방사형 탄막 (전조 없음) ───────────────────────────────
-    public void FireRadialAttack()
+    private void FireRadialAttack(int bulletCount)
     {
         float angleStep = 360f / bulletCount;
         for (int i = 0; i < bulletCount; i++)
@@ -61,11 +63,14 @@ public class EnemyAttack : MonoBehaviour
     // ── 방사형 탄막 (궤적 전조 있음) ─────────────────────────
 
     public void FireRadialAttackWithTelegraph(System.Action onComplete = null)
+    => FireRadialAttackWithTelegraph(_defaultBulletCount, onComplete);
+
+    public void FireRadialAttackWithTelegraph(int bulletCount, System.Action onComplete = null)
     {
-        StartCoroutine(RadialTelegraphRoutine(onComplete));
+        StartCoroutine(RadialTelegraphRoutine(bulletCount, onComplete));
     }
 
-    private IEnumerator RadialTelegraphRoutine(System.Action onComplete)
+    private IEnumerator RadialTelegraphRoutine(int bulletCount, System.Action onComplete)
     {
         // 1) 방향별 궤적 표시
         float angleStep = 360f / bulletCount;
@@ -79,6 +84,7 @@ public class EnemyAttack : MonoBehaviour
                 Mathf.Sin(angle * Mathf.Deg2Rad));
 
             var telegraph = GetTelegraph();
+            if (telegraph == null) continue;   // 프리팹 미연결 시에도 탄막은 발사
             telegraph.Show(transform.position, dir);
             telegraphs.Add(telegraph);
         }
@@ -91,7 +97,7 @@ public class EnemyAttack : MonoBehaviour
             t.Hide(() => ReturnTelegraph(t));
 
         SoundManager.Instance.PlaySFX("SFX/BulletFire");
-        FireRadialAttack();
+        FireRadialAttack(bulletCount);
 
         onComplete?.Invoke();
     }
@@ -119,11 +125,11 @@ public class EnemyAttack : MonoBehaviour
         Vector2 dir = (targetPosition - (Vector2)transform.position).normalized;
 
         var telegraph = GetTelegraph();
-        telegraph.Show(transform.position, dir);
+        telegraph?.Show(transform.position, dir);
 
         yield return new WaitForSeconds(_telegraphDuration);
 
-        telegraph.Hide(() => ReturnTelegraph(telegraph));
+        telegraph?.Hide(() => ReturnTelegraph(telegraph));
         SoundManager.Instance.PlaySFX("SFX/BulletFire");
         FireSingleShot(targetPosition);
 
@@ -132,13 +138,15 @@ public class EnemyAttack : MonoBehaviour
 
     // ── 범위 공격 ─────────────────────────────────────────────
 
-    public void FireAreaAttack(Vector3 pos, Vector2 size, float angle = 0f,
-                               System.Action onComplete = null)
+    public void FireAreaAttack(Vector3 pos, Vector2 size, float angle = 0f, System.Action onComplete = null)
     {
         var zone = GetAreaZone();
-        if (zone == null) return;
+        if (zone == null)
+        {
+            onComplete?.Invoke();   // 생성 실패해도 기다리는 패턴이 멈추지 않게
+            return;
+        }
 
-        // 반납 콜백을 onComplete에 추가
         zone.Fire(pos, size, _areaTelegraphDuration, angle, () =>
         {
             ReturnAreaZone(zone);
@@ -153,9 +161,14 @@ public class EnemyAttack : MonoBehaviour
         FireAreaAttack(playerObj.transform.position, size, 0f, onComplete);
     }
 
-    public void FireMultiAreaAttack(Vector3[] positions, Vector2 size,
-                                    System.Action onComplete = null)
+    public void FireMultiAreaAttack(Vector3[] positions, Vector2 size, System.Action onComplete = null)
     {
+        if (positions.Length == 0)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
         int remaining = positions.Length;
         foreach (var pos in positions)
         {

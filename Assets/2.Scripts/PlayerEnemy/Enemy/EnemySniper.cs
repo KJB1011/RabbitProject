@@ -68,13 +68,10 @@ public class Enemy_Sniper : EnemyController
 
     IEnumerator PatternSingleShot()
     {
-        var playerObj = GameObject.FindWithTag("Player");
-        if (playerObj == null) yield break;
+        if (PlayerTF == null) yield break;
 
-        // 전조 있는 단발 발사 (Telegraph가 전조 역할을 하므로 별도 Telegraph() 불필요)
         bool done = false;
-        _attack.FireSingleShotWithTelegraph(playerObj.transform.position,
-                                            () => done = true);
+        _attack.FireSingleShotWithTelegraph(PlayerTF.position, () => done = true);
         yield return new WaitUntil(() => done);
     }
 
@@ -84,8 +81,10 @@ public class Enemy_Sniper : EnemyController
     {
         for (int i = 0; i < 3; i++)
         {
+            if (PlayerTF == null) yield break;
+
             bool done = false;
-            _attack.FireAreaAttackAtPlayer(_areaSize, () => done = true);
+            _attack.FireAreaAttack(PlayerTF.position, _areaSize, 0f, () => done = true);
             yield return new WaitUntil(() => done);
             yield return new WaitForSeconds(_areaDelay);
         }

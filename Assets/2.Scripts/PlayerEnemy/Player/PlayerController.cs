@@ -3,7 +3,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-
+using static Defines;
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] float _dashDistance = 4f;
@@ -57,7 +57,6 @@ public class PlayerController : MonoBehaviour
     bool _boundaryEnabled = true;
 
     int _invincibleCount = 0;
-    public bool _isInvincible => _invincibleCount > 0;
 
     float _damageMultiplier = 1f;
 
@@ -66,13 +65,14 @@ public class PlayerController : MonoBehaviour
     float _superSkillCooldown;
     float _specialSkillCooldown;
 
-    float _atkMultiplierBonus = 0f;    // 아티팩트1 - 공격력 배율 보너스
-    float _specialDamageBonus = 0f;    // 아티팩트3 - 필살기 데미지 보너스
-    float _extraDashInvincibleTime = 0f; // 아티팩트5 - 대쉬 추가 무적시간
+    float _atkMultiplierBonus = 0f;       // 외부(아티팩트·버프) 공격력 배율 보너스
+    float _specialDamageBonus = 0f;       // 외부 필살기 데미지 보너스
+    float _extraDashInvincibleTime = 0f;  // 외부 대쉬 추가 무적 시간
 
-    public event System.Action OnDashStarted;       // 아티팩트1,5용
-    public event System.Action OnBasicAttackHit;    // 아티팩트2,4용
+    public event System.Action OnDashStarted;
+    public event System.Action<EnemyBase, AttackType> OnAttackHit;   // 맞은 적 + 공격 종류
 
+    public bool IsInvincible => _invincibleCount > 0;
     public int CurrentHp => _hp;
     public int MaxHp => _maxHp;
     public float Atk => _atk;
@@ -85,17 +85,23 @@ public class PlayerController : MonoBehaviour
     public float SuperSkillCooldownRatio => _superSkillCooldownDuration <= 0 ? 0 : Mathf.Clamp01(_superSkillCooldown / _superSkillCooldownDuration);
     public float SpecialSkillCooldownRatio => _specialSkillCooldownDuration <= 0 ? 0 : Mathf.Clamp01(_specialSkillCooldown / _specialSkillCooldownDuration);
     
+    // 외부 효과(아티팩트·버프)용 스탯 변경
     public void AddAtkMultiplier(float bonus) => _atkMultiplierBonus += bonus;
     public void RemoveAtkMultiplier(float bonus) => _atkMultiplierBonus -= bonus;
     public void AddSpecialDamageBonus(float bonus) => _specialDamageBonus += bonus;
     public void AddDashInvincibleTime(float time) => _extraDashInvincibleTime += time;
-    public int GetBaseAtk() => (int)_atk; // (아티팩트용)
-    public void NotifyBasicAttackHit() => OnBasicAttackHit?.Invoke(); // EnemyHitbox에서 기본 공격 적중 시 호출
+    public int GetBaseAtk() => (int)_atk;
 
-    // (아티팩트용) Q 스킬 쿨타임 감소용 함수
+
+    // EnemyHitbox 에서 플레이어 공격 적중 시 호출
+    public void NotifyAttackHit(EnemyBase target, AttackType type) => OnAttackHit?.Invoke(target, type);
+    public AttackType GetAttackType(Collider2D attackCollider) => _playerAttack.GetAttackType(attackCollider);
+
+    // Q 스킬 쿨타임 감소 (외부 효과용)
     public void ReduceSuperSkillCooldown(float amount)
     {
         _superSkillCooldown = Mathf.Max(0, _superSkillCooldown - amount);
+        _uiPlayerSkill.SetCoolDown(SKILL.SUPER, SuperSkillCooldownRatio);   // 0이 되면 Update가 갱신하지 않으므로 직접 갱신
     }
 
     // 플레이어 움직임 제어 함수
@@ -383,7 +389,7 @@ public class PlayerController : MonoBehaviour
         var enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
         foreach (var enemy in enemies)
         {
-            if (!enemy.gameObject.activeSelf) continue;
+            if (!enemy.gameObject.activeSelf || enemy.IsDead) continue;
             enemy.DamageTaken(damage);
             DamageTextManager.Instance.ShowSpecial(damage, enemy.transform.position);
         }
@@ -454,26 +460,26 @@ public class PlayerController : MonoBehaviour
         return (int)(damage * _damageMultiplier);
     }
 
-public void DamageTaken()
-{
-    if (_isInvincible) return;
-    if (_isGameOver) return;
-
-    _hp--;
-    _hpTxt.text = _hp.ToString();
-
-    SoundManager.Instance?.PlaySFX("SFX/Hit");
-    FloatingTextManager.Instance.ShowDamage(transform.position);
-
-    if (_hp <= 0)
+    public bool DamageTaken()
     {
-        _isGameOver = true;
-        StartCoroutine(GameOverRoutine());
-        return;
-    }
+        if (IsInvincible || _isGameOver) return false;
 
-    StartCoroutine(InvincibleRoutine());
-}
+        _hp--;
+        _hpTxt.text = _hp.ToString();
+
+        SoundManager.Instance?.PlaySFX("SFX/Hit");
+        FloatingTextManager.Instance.ShowDamage(transform.position);
+
+        if (_hp <= 0)
+        {
+            _isGameOver = true;
+            StartCoroutine(GameOverRoutine());
+            return true;
+        }
+
+        StartCoroutine(InvincibleRoutine());
+        return true;
+    }
 
     private IEnumerator GameOverRoutine()
     {

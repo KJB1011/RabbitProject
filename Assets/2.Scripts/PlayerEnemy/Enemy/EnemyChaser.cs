@@ -16,9 +16,6 @@ public class Enemy_Chaser : EnemyController
     [SerializeField] private float _crossOffset = 3f;   // 십자 간격
     [SerializeField] private Vector2 _crossAreaSize = new Vector2(2.5f, 2.5f);
 
-    [Header("전조 표시")]
-
-    private Transform _playerTF;
     private int _patternCount = 0;
 
     protected override void Awake()
@@ -29,15 +26,11 @@ public class Enemy_Chaser : EnemyController
 
     void Start()
     {
-        var playerObj = GameObject.FindWithTag("Player");
-        if (playerObj != null) _playerTF = playerObj.transform;
-
         StartCoroutine(ChaserLoop());
     }
 
     IEnumerator ChaserLoop()
     {
-        yield return new WaitForSeconds(1f);
         yield return StartCoroutine(EntranceFromRight(transform.position));
 
         while (true)
@@ -56,9 +49,9 @@ public class Enemy_Chaser : EnemyController
 
     IEnumerator PatternDash()
     {
-        if (_playerTF == null) yield break;
+        if (PlayerTF == null) yield break;
 
-        Vector2 targetPos = _playerTF.position;
+        Vector2 targetPos = PlayerTF.position;
         yield return StartCoroutine(MoveToPosition(targetPos));
         yield return new WaitForSeconds(_waitBeforeShot);
 

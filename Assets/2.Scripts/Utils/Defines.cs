@@ -1,4 +1,3 @@
-
 public class Defines
 {
     public enum SKILL
@@ -6,13 +5,11 @@ public class Defines
         MAIN = 0, SUB, SUPER, SPECIAL
     }
 
-    public enum ArtifactId
+    // 플레이어 공격 종류 (아티팩트 발동 조건 구분용)
+    public enum AttackType
     {
-        WhipAndCarrot,       // 채찍과 당근
-        AccelerationWatch,   // 가속의 회중시계
-        CarrotBazooka,       // 당근 바주카
-        SmallRabbitFriend,   // 작은 토끼 친구
-        ShiningCarrot,       // 빛나는 당근
+        Basic,   // 좌클릭 기본 공격
+        Super,   // Q 스킬
     }
 
     public enum ITEM
@@ -23,5 +20,4 @@ public class Defines
         RANGEUP,
         CRITRATEUP,
     }
-
 }

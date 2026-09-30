@@ -1,10 +1,10 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System;
 using System.Collections;
 
 /// <summary>
-/// EnemyµéÀÇ ±âÃÊBase¸¦ ´ã´çÇÏ´Â ½ºÅ©¸³Æ®
-/// ±âº» ½ºÅÈ, »ı¼º, ¿¬Ãâ, ÇÇÇØ, Á×À½ µîÀÇ ±â´ÉÀÌ µé¾îÀÖ½À´Ï´Ù.
+/// Enemyë“¤ì˜ ê¸°ì´ˆBaseë¥¼ ë‹´ë‹¹í•˜ëŠ” ìŠ¤í¬ë¦½íŠ¸
+/// ê¸°ë³¸ ìŠ¤íƒ¯, ìƒì„±, ì—°ì¶œ, í”¼í•´, ì£½ìŒ ë“±ì˜ ê¸°ëŠ¥ì´ ë“¤ì–´ìˆìŠµë‹ˆë‹¤.
 /// </summary>
 public abstract class EnemyBase : MonoBehaviour
 {
@@ -14,47 +14,51 @@ public abstract class EnemyBase : MonoBehaviour
 
     public event Action OnDied;
 
-    [Header("µîÀå ¿¬Ãâ")]
+    [Header("ë“±ì¥ ì—°ì¶œ")]
     [SerializeField] protected float _entranceDuration = 1.2f;
     [SerializeField] protected float _entranceOffsetX = 20f;
 
-    [Header("»ç¸Á ¿¬Ãâ")]
+    [Header("ì‚¬ë§ ì—°ì¶œ")]
     [SerializeField] float _bounceHeight = 3f;
     [SerializeField] float _bounceUpTime = 0.3f;
     [SerializeField] float _fallSpeed = 15f;
     [SerializeField] float _fallDistance = 10f;
     [SerializeField] float _spinSpeed = 720f;
 
-    void Awake()
-    {
-        transform.position = transform.position + Vector3.right * _entranceOffsetX;
-    }
-    public virtual void DamageTaken(int damage)
-    {
-        if (damage <= 0) return;
+    public bool IsDead { get; protected set; }
 
-        _nowHp -= damage;
-        _nowHp = Mathf.Max(_nowHp, 0);
+    public void DamageTaken(int damage) 
+    {
+        if (IsDead || damage <= 0) return;
 
-        // ÀüÅõ Åë°è ´©Àû
+        int before = _nowHp;
+        _nowHp = ClampHp(_nowHp - damage);
+
+        // ì „íˆ¬ í†µê³„ â€” ì‹¤ì œë¡œ ê¹ì¸ HPë§Œ ì§‘ê³„
         if (IngameManager.Instance._isBattle)
-            IngameManager.Instance.AddDamage(damage);
+            IngameManager.Instance.AddDamage(before - _nowHp);
 
-        IngameManager.Instance.SetHPBar((float)_nowHp / _totalHp);
+        IngameManager.Instance.SetHPBar(hpRate);
 
         if (_nowHp <= 0)
             Die();
     }
 
+    // ë°ë¯¸ì§€ ì ìš© í›„ HP ë³´ì •. ë³´ìŠ¤ í˜ì´ì¦ˆì²˜ëŸ¼ HP í•˜í•œì´ ë‹¤ë¥¸ ì ì€ ì´ê²ƒë§Œ ì¬ì •ì˜
+    protected virtual int ClampHp(int hp) => Mathf.Max(hp, 0);
+
     protected virtual void Die()
     {
-        // ÆĞÅÏ Áï½Ã Áß´Ü
+        if (IsDead) return;
+        IsDead = true;
+
+        // íŒ¨í„´ ì¦‰ì‹œ ì¤‘ë‹¨
         StopAllCoroutines();
         var attack = GetComponent<EnemyAttack>();
         if (attack != null)
             attack.ClearAll();
 
-        // ÅºÈ¯ ÀüÃ¼ Á¦°Å
+        // íƒ„í™˜ ì „ì²´ ì œê±°
         VFXManager.Instance.ClearAllBullets();
 
         var player = FindFirstObjectByType<PlayerController>();
