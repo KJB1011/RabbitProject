@@ -7,7 +7,7 @@
 ## Play / Demo
 
 - 게임플레이 영상: `https://youtu.be/AVceYGtCO7s`
-- 다운로드하지 않고 플레이: `https://kjb001011.itch.io/rabbitprojecttest`
+- 다운로드하지 않고 플레이: `https://kjb001011.itch.io/rabbitproject`
 
 ![gameplay](docs/gameplay.gif)
 
