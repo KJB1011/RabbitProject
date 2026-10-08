@@ -49,8 +49,8 @@ itch.io에 배포해 지인들에게 플레이 테스트를 받았습니다. 게
 ## 실행 방법
 
 ```
-구글 드라이브 : https://drive.google.com/drive/folders/1W2t1MT0lhWwU00Eu1GBElk8IdSsrBYU9
--다운로드 후 'RabbitProject.exe' 실행
+구글 드라이브 : https://drive.google.com/drive/folders/1Y9iuKwyzTWAd2EQZtdIJlRGt91BXCGw8
+-'Rabbit Project'다운로드 후 'Rabbit Project.exe' 실행
 ```
 
 ## 배운 점
